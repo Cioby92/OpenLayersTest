@@ -1,0 +1,74 @@
+﻿<link href="~/Content/font-awesome.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.4/ol.css" type="text/css">
+<style>
+    .map {
+        height:600px;
+        width:800px;
+    }
+    .fa-marker{
+        color:red;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.4/ol.js"></script>
+<title>OpenLayers example</title>
+<div class="row">
+
+        <div id="map" class="map"></div>
+    @*<div class="col-6">
+            <p>Starting Point</p>
+            <div class="form-group">
+                <label for="usr">Lan:</label>
+                <input type="text" class="form-control" id="Lan">
+            </div>
+            <div class="form-group">
+                <label for="pwd">Lot:</label>
+                <input type="text" class="form-control" id="Lot">
+            </div>
+            <button class="btn btn-outline-dark" id="AddButton">Adauga</button>
+            <hr />
+            <p> Add Points</p>
+            <div class="form-group">
+                <label for="usr">Lan:</label>
+                <input type="text" class="form-control" id="Lan1">
+            </div>
+            <div class="form-group">
+                <label for="pwd">Lot:</label>
+                <input type="text" class="form-control" id="Lot1">
+            </div>
+            <button class="btn btn-outline-dark" id="AddNext">Adauga</button>
+
+        </div>*@
+
+
+</div>
+
+<form class="form-inline">
+    <label>Geometry type &nbsp;</label>
+    <select id="type">
+        <option value="Point">Point</option>
+        <option value="LineString">LineString</option>
+        <option value="Polygon">Polygon</option>
+        <option value="Circle">Circle</option>
+    </select>
+</form>
+<button class="btn btn-sm btn-outline-success" id="RemoveInteraction">Process drawn elements</button>
+<button class="btn btn-sm btn-outline-danger" id="Add">Manually Add Button</button>
+<button class="btn btn-sm btn-outline-danger" id="GeoServer">Parse GeoServer Capabilities</button>
+<button class="btn btn-sm btn-outline-danger" id="ClearLayers">Clear Layers</button>
+<span id="status">&nbsp;0 selected features</span>
+<table class="table table-hover " id="CoordinatesTable">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Lan</th>
+                <th>Lot</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+<link href="~/Scripts/ol.css" rel="stylesheet" />
+<script src="~/Scripts/ol.js"></script>
+<script type="text/javascript" src="~/Scripts/Index.js">
+</script>
