@@ -66,6 +66,7 @@ var count = 1;
 const EPGS3857 = "EPSG:3857";
 const EPGS4326 = "EPSG:4326";
 var source = new ol.source.Vector();
+var secondSource = new ol.source.Vector();
 var draw, snap; // global so we can remove them later
 var typeSelect = document.getElementById('type');
 var VectorLayers = [];
@@ -110,6 +111,7 @@ class MapInteraction {
 
 var RemoveAllFeatures = () => {
     vector.getSource().clear();
+    secondvector.getSource().clear();
     clearOverlays();
 }
 
@@ -118,9 +120,6 @@ RemoveLastFeature = () => {
     var lastFeature = features[features.length - 1];
     vector.removeFeature(lastFeature);
 }
-
-
-
 
 //map interaction functions
 function AddMarker(Position) {
@@ -142,6 +141,7 @@ function clearOverlays() {
 
 var RemoveAllFeatures = () => {
     vector.getSource().clear();
+    secondvector.getSource().clear();
     clearOverlays();
 }
 
@@ -159,7 +159,7 @@ var vector = new ol.layer.Vector({
     source: source,
     style: new ol.style.Style({
         fill: new ol.style.Fill({
-            color: 'rgba(255, 255, 255, 0.2)'
+            color: 'rgba(255, 255, 255, 0.5)'
         }),
         stroke: new ol.style.Stroke({
             color: '#ffcc33',
@@ -173,9 +173,22 @@ var vector = new ol.layer.Vector({
         })
     })
 });
+var secondvector = new ol.layer.Vector({
+    source: secondSource,
+    style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+            color: '#FFA07A',
+            width: 2
+        }),
+        image: new ol.style.Circle({
+            radius: 7,
+           
+        })
+    })
+})
 
 var map = new ol.Map({
-    layers: [raster, vector],
+    layers: [raster, vector,secondvector],
     target: 'map',
     view: new ol.View({
         // center: [-11000000, 4600000],
@@ -185,6 +198,11 @@ var map = new ol.Map({
 });
 
 var modify = new ol.interaction.Modify({ source: source });
+
+modify.on('modifyend', function (evt) {
+    secondvector.getSource().clear();
+    ProcessDrawing();
+})
 
 map.addInteraction(modify);
 
@@ -205,6 +223,7 @@ function addInteractions() {
             var r = confirm("The existing polygon will be deleted!");
             if (r == true) {
                 RemoveAllFeatures();
+                //bufferVector.getSource().clear();
                 clearOverlays();
                 map.removeInteraction(draw);
                 map.removeInteraction(snap);
@@ -216,17 +235,22 @@ function addInteractions() {
             }
         }
     });
- 
-    
-
+    vector.getSource().on('addfeature', function (event) {
+        ProcessDrawing();
+    })
+   
+    draw.on("drawend", function (e) {
+        
+    })
     snap = new ol.interaction.Snap({ source: source });
-    snap.on("drawend", function () {
+
+ 
+    map.addInteraction(snap);
+    snap.on("propertychange", function () {
         RemoveAllFeatures();
         clearOverlays();
         ProcessDrawing();
     });
- 
-    map.addInteraction(snap);
 }
 
 /**
@@ -285,6 +309,8 @@ var removeLayerFromMap = (layer) => {
 
 //ui interaction functions
 var ProcessDrawing = () => {
+    addbuffer();
+
     count = 1;
     clearOverlays();
     var features = vector.getSource().getFeatures();
@@ -305,6 +331,35 @@ var ProcessDrawing = () => {
         AddCoordinatesToTable(GeometryArray);
     })
 
+}
+
+var addbuffer = () => {
+    var features = vector.getSource().getFeatures();
+    var parser = new jsts.io.OL3Parser();
+    //parser.inject(ol.geom.Point, ol.geom.LineString, ol.geom.LinearRing, ol.geom.Polygon, ol.geom.MultiPoint, ol.geom.MultiLineString, ol.geom.MultiPolygon);
+    var bufferVector = [];
+    features.forEach(function (feature) {
+        var jstsGeom = parser.read(feature.getGeometry());
+        // create a buffer of 40 meters around each line
+        var innerbuffer = jstsGeom.buffer(-100);
+        var outerbuffer = jstsGeom.buffer(100);
+        // convert back from JSTS and replace the geometry on the feature
+        //feature.setGeometry(parser.write(buffered));
+        var innerfeature = new ol.Feature({
+            name: 'innerbuffer',
+            geometry: parser.write(innerbuffer)
+        });
+        var outerfeature = new ol.Feature({
+            name: 'outerbuffer',
+            geometry: parser.write(outerbuffer)
+        });
+
+        bufferVector.push(innerfeature);
+        bufferVector.push(outerfeature);
+
+    });
+    secondSource.addFeatures(bufferVector);
+  
 }
 
 var functionParsePolygon = (geometry) => {
