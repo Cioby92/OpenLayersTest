@@ -1,73 +1,11 @@
-﻿//var count = 1;
-//var source;
-//AddButton.addEventListener('click', function () {
-
-//    start = ol.proj.fromLonLat([parseFloat($('#Lan').val()), parseFloat($('#Lot').val())]);
-//    AddMarker(start);
-//})
-
-//AddNext.addEventListener('click', function () {
-//    end = ol.proj.fromLonLat([parseFloat($('#Lan1').val()), parseFloat($('#Lot1').val())]);
-//    if (start === end) {
-//        alert("Please enter another point");
-//        return
-//    }
-
-//    var linie2style = [
-//        // linestring
-//        new ol.style.Style({
-//            stroke: new ol.style.Stroke({
-//                color: '#000080',
-//                width: 3
-//            })
-//        })
-//    ];
-
-//    $('#Table').append('<tr><td>1</td><td>' + $('#Lan1').val() + '</td><td>' + $('#Lot1').val() + '</td></tr>');
-
-
-//     source = new ol.source.Vector({
-//        features: [new ol.Feature({
-//            geometry: new ol.geom.LineString([start, end]),
-//            name: 'Line',
-//        }),
-//        ]
-//    });
-//    var linie2 = new ol.layer.Vector({
-//        source: source
-//    });
-//    linie2.setStyle(linie2style);
-//    map.addLayer(linie2);
-
-//    AddMarker(end);
-//    start = end;
-
-
-//    map.getView().fit(source.getExtent(), map.getSize());
-
-//})
-//var map = new ol.Map({
-//    target: 'map',
-//    layers: [
-//        new ol.layer.Tile({
-//            source: new ol.source.OSM()
-//        })
-//    ],
-//    view: new ol.View({
-//        center: ol.proj.fromLonLat([23.41, 45.82]),
-//        zoom: 5
-//    })
-//});
-
-//var start = ol.proj.fromLonLat([33.8, 8.4]);
-//var end = ol.proj.fromLonLat([37.5, 8.0]);
-//global variables
-var count = 1;
+﻿var count = 1;
 const EPGS3857 = "EPSG:3857";
 const EPGS4326 = "EPSG:4326";
+const EPSG3844 = "EPSG:3844";
+const URLGeoserver=""
 var source = new ol.source.Vector();
 var secondSource = new ol.source.Vector();
-var draw, snap; // global so we can remove them later
+var draw, snap, modify; // global so we can remove them later-->niciodata toate 3
 var typeSelect = document.getElementById('type');
 var VectorLayers = [];
 var VectorLayersName = [];
@@ -113,12 +51,6 @@ var RemoveAllFeatures = () => {
     vector.getSource().clear();
     secondvector.getSource().clear();
     clearOverlays();
-}
-
-RemoveLastFeature = () => {
-    var features = vector.getSource.getFeatures();
-    var lastFeature = features[features.length - 1];
-    vector.removeFeature(lastFeature);
 }
 
 //map interaction functions
@@ -182,13 +114,13 @@ var secondvector = new ol.layer.Vector({
         }),
         image: new ol.style.Circle({
             radius: 7,
-           
+
         })
     })
 })
 
 var map = new ol.Map({
-    layers: [raster, vector,secondvector],
+    layers: [raster, vector, secondvector],
     target: 'map',
     view: new ol.View({
         // center: [-11000000, 4600000],
@@ -197,66 +129,88 @@ var map = new ol.Map({
     }),
 });
 
-var modify = new ol.interaction.Modify({ source: source });
 
-modify.on('modifyend', function (evt) {
-    secondvector.getSource().clear();
-    ProcessDrawing();
-})
 
-map.addInteraction(modify);
+function AddModify() {
+    modify = new ol.interaction.Modify({ source: source });
+    map.addInteraction(modify);
+
+    modify.on('modifyend', function (evt) {
+        secondvector.getSource().clear();
+        ProcessDrawing();
+    })
+}
+
+function RemoveAllInteraction() {
+    if (draw)
+        map.removeInteraction(draw);
+    if (snap)
+        map.removeInteraction(snap);
+    if (modify)
+        map.removeInteraction(modify);
+}
 
 function addInteractions() {
-    RemoveAllFeatures();
-
+    var r;
+    RemoveAllInteraction();
+    AddModify();
     draw = new ol.interaction.Draw({
         source: source,
-        type: typeSelect.value
+        type: typeSelect.value,
+        stopClick: true
     });
+    snap = new ol.interaction.Snap({ source: source });
 
     map.addInteraction(draw);
-    map.on("dblclick", function (e) {
-        return;
-    });
+
+
+    map.addInteraction(snap);
+
     draw.on("drawstart", function (e) {
-        if (vector.getSource().getFeatures().length > 0) {
-            var r = confirm("The existing polygon will be deleted!");
-            if (r == true) {
-                RemoveAllFeatures();
-                //bufferVector.getSource().clear();
-                clearOverlays();
-                map.removeInteraction(draw);
-                map.removeInteraction(snap);
-                map.addInteraction(snap);
-                map.addInteraction(draw);
-            } else {
-                map.removeInteraction(draw);
-                map.addInteraction(draw);
+        if (typeSelect.value !== "Point") {
+            if (vector.getSource().getFeatures().length > 0) {
+                r = confirm("The existing polygon will be deleted!");
+                if (r == true) {
+                    RemoveAllFeatures();
+                    //bufferVector.getSource().clear();
+                    clearOverlays();
+                    map.removeInteraction(draw);
+                    if (snap) map.removeInteraction(snap);
+                    addInteractions();
+                } else {
+                    map.removeInteraction(draw);
+                    if (snap) map.removeInteraction(snap);
+                    addInteractions();
+                }
             }
         }
     });
-    vector.getSource().on('addfeature', function (event) {
-        ProcessDrawing();
-    })
-   
-    draw.on("drawend", function (e) {
-        
-    })
-    snap = new ol.interaction.Snap({ source: source });
 
- 
-    map.addInteraction(snap);
-    snap.on("propertychange", function () {
-        RemoveAllFeatures();
-        clearOverlays();
-        ProcessDrawing();
-    });
+
+    draw.on("drawend", function (e) {
+        if (typeSelect.value == "Point") {
+            RemoveAllFeatures();
+            clearOverlays();
+            map.removeInteraction(draw);
+            if (snap) map.removeInteraction(snap);
+            addInteractions();
+        }
+    })
+
+
 }
 
+map.on("dblclick", function (e) {
+    alert("fdsa");
+});
+vector.getSource().on('addfeature', function (event) {
+    ProcessDrawing();
+})
 /**
  * Handle change event.
  */
 typeSelect.onchange = function () {
+    RemoveAllFeatures();
     map.removeInteraction(draw);
     map.removeInteraction(snap);
     addInteractions();
@@ -317,6 +271,7 @@ var ProcessDrawing = () => {
     var SelectedGeometry = typeSelect.options[typeSelect.selectedIndex].text;
     features.forEach(function (feature) {
         var geometry = feature.getGeometry().getCoordinates();
+        console.log(GetWKTFromFeature(feature));
         let GeometryArray = [];
         if (SelectedGeometry == "LineString") {
             GeometryArray = functionParseLine(geometry);
@@ -325,7 +280,6 @@ var ProcessDrawing = () => {
             GeometryArray = functionParsePolygon(geometry);
         }
         if (SelectedGeometry == "Point") {
-            console.log(geometry);
             GeometryArray = functionParsePoint(geometry);
         }
         AddCoordinatesToTable(GeometryArray);
@@ -340,8 +294,9 @@ var addbuffer = () => {
     var bufferVector = [];
     features.forEach(function (feature) {
         var jstsGeom = parser.read(feature.getGeometry());
-        // create a buffer of 40 meters around each line
+        // create a buffer of 100 meters around each line
         var innerbuffer = jstsGeom.buffer(-100);
+        console.log(innerbuffer.getGeometryType());
         var outerbuffer = jstsGeom.buffer(100);
         // convert back from JSTS and replace the geometry on the feature
         //feature.setGeometry(parser.write(buffered));
@@ -353,13 +308,10 @@ var addbuffer = () => {
             name: 'outerbuffer',
             geometry: parser.write(outerbuffer)
         });
-
         bufferVector.push(innerfeature);
         bufferVector.push(outerfeature);
-
     });
     secondSource.addFeatures(bufferVector);
-  
 }
 
 var functionParsePolygon = (geometry) => {
@@ -406,6 +358,12 @@ var AddCoordinatesToTable = (coordinatesArray) => {
     })
 }
 
+
+var GetWKTFromFeature = (feature) => {
+    var geom = feature.getGeometry();
+    var format = new ol.format.WKT();
+    return format.writeGeometry(geom);
+};
 var AddFeatureFromBackend = () => {
     var myGeometry;
 
@@ -425,5 +383,6 @@ document.querySelector("#RemoveInteraction").addEventListener("click", function 
 document.querySelector("#Add").addEventListener('click', function (e) { AddFeatureFromBackend() });
 document.querySelector("#GeoServer").addEventListener("click", function (e) { ParseLayersFromGeoserver(); })
 document.querySelector("#ClearLayers").addEventListener("click", function (e) { RemoveAllLayerFromMap(); })
+
 
 
