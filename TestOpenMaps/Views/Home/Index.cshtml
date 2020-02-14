@@ -2,11 +2,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/openlayers/4.6.4/ol.css" type="text/css">
 <style>
     .map {
-        height:600px;
-        width:800px;
+        height: 600px;
+        width: 800px;
     }
-    .fa-marker{
-        color:red;
+
+    .fa-marker {
+        color: red;
     }
 </style>
 <title>OpenLayers example</title>
@@ -15,7 +16,7 @@
 </div>
 <div class="row">
 
-        <div id="map" class="map"></div>
+    <div id="map" class="map"></div>
     @*<div class="col-6">
             <p>Starting Point</p>
             <div class="form-group">
@@ -59,17 +60,18 @@
 <button class="btn btn-sm btn-outline-danger" id="ClearLayers">Clear Layers</button>
 <span id="status">&nbsp;0 selected features</span>
 <table class="table table-hover " id="CoordinatesTable">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Lan</th>
-                <th>Lot</th>
-            </tr>
-        </thead>
-        <tbody>
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Lan</th>
+            <th>Lot</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
 
-        </tbody>
-    </table>
+<button class="btn btn-outline-danger" id="AddPoints">Add1000Points</button>
 <script type="text/javascript" src="~/Scripts/jts.min.js"></script>
 <link href="~/Scripts/ol.css" rel="stylesheet" />
 <script src="~/Scripts/ol-debug.js"></script>

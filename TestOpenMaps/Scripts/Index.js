@@ -1,11 +1,13 @@
-﻿var count = 1;
+﻿
+"use strict"
+var count = 1;
 const EPGS3857 = "EPSG:3857";
 const EPGS4326 = "EPSG:4326";
 const EPSG3844 = "EPSG:3844";
 const URLGeoserver=""
 var source = new ol.source.Vector();
 var secondSource = new ol.source.Vector();
-var draw, snap, modify; // global so we can remove them later-->niciodata toate 3
+var draw, snap, modify; // global so we can remove them later-
 var typeSelect = document.getElementById('type');
 var VectorLayers = [];
 var VectorLayersName = [];
@@ -15,6 +17,7 @@ class Point {
         this.latitude = latitude;
     }
 }
+
 class MapInteraction {
     constructor(map) {
         this._map = map;
@@ -77,7 +80,7 @@ var RemoveAllFeatures = () => {
     clearOverlays();
 }
 
-RemoveLastFeature = () => {
+var RemoveLastFeature = () => {
     var features = vector.getSource.getFeatures();
     var lastFeature = features[features.length - 1];
     vector.removeFeature(lastFeature);
@@ -128,8 +131,6 @@ var map = new ol.Map({
         zoom: 6
     }),
 });
-
-
 
 function AddModify() {
     modify = new ol.interaction.Modify({ source: source });
@@ -186,7 +187,6 @@ function addInteractions() {
         }
     });
 
-
     draw.on("drawend", function (e) {
         if (typeSelect.value == "Point") {
             RemoveAllFeatures();
@@ -196,8 +196,6 @@ function addInteractions() {
             addInteractions();
         }
     })
-
-
 }
 
 map.on("dblclick", function (e) {
@@ -216,7 +214,7 @@ typeSelect.onchange = function () {
     addInteractions();
 };
 
-addInteractions();
+//addInteractions();
 
 var ParseLayersFromGeoserver = () => {
     var parse = new ol.format.WMSCapabilities();
@@ -263,6 +261,7 @@ var removeLayerFromMap = (layer) => {
 
 //ui interaction functions
 var ProcessDrawing = () => {
+    return;
     addbuffer();
 
     count = 1;
@@ -365,14 +364,14 @@ var GetWKTFromFeature = (feature) => {
     return format.writeGeometry(geom);
 };
 var AddFeatureFromBackend = () => {
-    var myGeometry;
-
+    let myGeometry;
     //transformare coordonate
     myGeometry = new ol.geom.Polygon([[
         ol.proj.transform([-10, -22], 'EPSG:4326', 'EPSG:3857'),
-        ol.proj.transform([-44, -55], 'EPSG:4326', 'EPSG:3857'),
-        ol.proj.transform([-88, 75], 'EPSG:4326', 'EPSG:3857')
+        ol.proj.transform([-11, -23], 'EPSG:4326', 'EPSG:3857'),
+        ol.proj.transform([-12, -24], 'EPSG:4326', 'EPSG:3857')
     ]]);
+    console.log(myGeometry);
     var featureToAdd = new ol.Feature({
         geometry: myGeometry
     });
@@ -384,5 +383,43 @@ document.querySelector("#Add").addEventListener('click', function (e) { AddFeatu
 document.querySelector("#GeoServer").addEventListener("click", function (e) { ParseLayersFromGeoserver(); })
 document.querySelector("#ClearLayers").addEventListener("click", function (e) { RemoveAllLayerFromMap(); })
 
+//partea asta te intereseaza mai mult
+//adaug 1000 de feature cu svg si la mine merge ok
+document.querySelector("#AddPoints").addEventListener("click", function (e) {
+    for (let i = 0; i < 1000; i++) {
+        let tempPoint = new Point(genRand(44, 47, 5), genRand(21, 27, 5));
+        console.log(tempPoint);
+
+        let svg ='<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" width="158" height="108" viewBox="21 46 158 108"><path d="M25,50 l150,0 0,100 -150,0 z" stroke-width="4" stroke="black" fill="rgb(128,224,255)" fill-opacity="1" ></path><path d="M25,150 C25,110 175,110 175,150" stroke-width="4" stroke="black" fill="none" ></path><text x="100" y="110" text-anchor="middle" font-size="35" font-family="Arial" font-weight="bold" stroke-width="4" stroke="none" fill="black" >SRD</text></svg>'
+
+        var style = new ol.style.Style({
+            image: new ol.style.Icon({
+                opacity: 1,
+                src: 'data:image/svg+xml;utf8,' + svg,
+                scale: 0.3
+            })
+        });
+
+        var marker = new ol.Feature({
+            geometry: new ol.geom.Point(ol.proj.transform([tempPoint.latitude, tempPoint.longitude], 'EPSG:4326', 'EPSG:3857')),
+        });
+        marker.setStyle(style);
+                    
+        let geom = new ol.geom.Point(tempPoint.latitude, tempPoint.longitude);
+        console.log(marker);
+        let feature = new ol.Feature({
+            geometry: geom
+        });
+        vector.getSource().addFeature(marker);
+    }
+    console.log(vector.getSource());
+});
+//2641663.697536
+///5780351.408360
+function genRand(min, max, decimalPlaces) {
+    var rand = Math.random() < 0.5 ? ((1 - Math.random()) * (max - min) + min) : (Math.random() * (max - min) + min);  // could be min or max or anything in between
+    var power = Math.pow(10, decimalPlaces);
+    return Math.floor(rand * power) / power;
+}
 
 
